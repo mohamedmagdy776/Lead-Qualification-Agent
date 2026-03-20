@@ -112,9 +112,12 @@ It helps to:
 - Improves conversion rates  
 - Works 24/7 without human input  
 
+---
+## 🎥 Demo
+
+👉 [Watch the full demo video](https://github.com/mohamedmagdy776/Lead-Qualification-Agent/releases/download/v1.0.0/Video.mp4 
 
 ---
-
 ## 👨‍💻 Author
 
 **Mohamed Magdy Elghandour**  
