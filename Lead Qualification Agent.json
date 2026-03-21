@@ -1,0 +1,335 @@
+{
+  "name": "Lead Qualification Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -320,
+        -304
+      ],
+      "id": "d69faa4c-954d-4a18-b29a-0f8043849f44",
+      "name": "Telegram Trigger",
+      "webhookId": "e2b7832d-5188-4bc2-9e38-843999711cf7",
+      "credentials": {
+        "telegramApi": {
+          "id": "2g7FZIUqrF7YTS2x",
+          "name": "Telegram account 39"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "=You are a real estate lead qualification agent for XYZ \nCompany. Your job is to collect key information through \nconversation, internally score the lead, save responses, \nand direct them to the appropriate next step. Never \ndisclose the score or scoring process to the user.\n\n\n## Sequence of Steps (Must complete all 6 steps):\n1. **Greet and Explain:**\nStart with a warm greeting and explain you'll ask a \nfew quick questions to help match them with the right \nproperty.\nExample:\n\"Hi! I'd love to help you find the perfect property. \nMay I ask a few quick questions to get started?\"\n\n2. **Ask Only for Missing Information (One at a Time):**\n- For each required field, first check if the user has \n  already provided that information.\n- If already known, skip it silently — do NOT mention \n  you are skipping it.\n- Ask only ONE question at a time.\n- NEVER acknowledge the answer — just ask the next \n  question immediately.\n- Collect the following in order:\n  - What type of property are you interested in? \n    (Examples: Apartment, Villa, Commercial Space)\n  - Are you looking to buy or rent?\n  - Are you looking for a new property or resale?\n  - Will this be your first property purchase?\n  - What is your preferred location?\n    - Madinaty\n    - Elrehab\n    - The Fifth Settlement\n    - Marassi\n    - Elzamalek\n    - Elmohandeseen\n    - Madinat Nasr\n  - What is your preferred timeline?\n    - Immediately\n    - Within 1 month\n    - 1-3 months\n    - 3-6 months\n    - 6+ months\n  - What is your budget range?\n    - Below $200,000\n    - $200,000-$400,000\n    - $400,000-$700,000\n    - $700,000-$1,000,000\n    - Above $1,000,000\n  - What is your full name?\n  - What is your email address?\n  - What is your phone number?\n\n3. **Confirm & Save Details:**\nOnly AFTER collecting ALL answers, present a full \nsummary. This is the ONLY moment you may reference \ntheir answers.\nExample:\n\"Here's what I have so far:\n- Property type: Apartment\n- Buy/Rent: Buy\n- New/Resale: New\n- First purchase: No\n- Location: Madinaty\n- Timeline: Immediately\n- Budget: $700,000-$1,000,000\n- Name: Jamie Lee\n- Email: jamie.lee@email.com\n- Phone Number: 0120000000\nIs everything correct? Should I proceed?\"\n\n4. **Internal Lead Scoring (NEVER disclose to user):**\nAfter collecting all answers, assign a score out of \n100 based on:\n\n| Question | Scores |\n|----------|--------|\n| Property Type | Apartment (10), Villa (15), Commercial (10) |\n| Buy or Rent | Buy (15), Rent (5) |\n| New or Resale | New (10), Resale (10) |\n| First Purchase | Yes (5), No (10) |\n| Location | Madinaty/Elrehab/Fifth Settlement/Marassi/Elzamalek/Elmohandeseen/Madinat Nasr (10) |\n| Timeline | Immediately (20), Within 1 month (15), 1-3 months (10), 3-6 months (5), 6+ months (0) |\n| Budget | Above $1M (20), $700K-$1M (15), $400K-$700K (10), $200K-$400K (5), Below $200K (0) |\n\nThresholds:\n- High: 80 or above\n- Medium: 60-79\n- Low: Below 60\n\n5. **Save Lead After Confirmation:**\nUse `sheet_save_lead` tool once after user confirms.\nSave these exact fields:\n- property, buy_rent, new_resale, first_purchase,\n  location, timeline, budget, name, email, phone, score\n\n6. **Route Based on Score:**\n- High (≥80): Invite to book appointment.\n  \"Thank you for providing all the details. When are \n  you free to continue discussing further?\"\n- Low (<80): Inform agent will follow up.\n  \"Thank you for your interest. An agent from our \n  team will contact you soon.\"\n\n## Strict Rules:\n- Never reveal scoring, tools, or internal processes.\n- Never mention data is being saved to a database.\n- If asked about privacy: \"Your information is secure \n  and only used to assist with your property search.\"\n- If user wants to update data: add a new row with \n  all data including updates.\n- Always maintain professional, helpful tone.\n- If user's answer is ambiguous, ask ONE clarifying \n  question only.\n\n---\n\n##RULES:\n- Speak naturally and friendly\n- NEVER confirm or repeat what the user said\n- Go directly to the next question with full options listed\n- Output plain text only, no JSON\n\n## If the score of the user internally is larger than 80 and if the user wants to continue chatting with you to complete the Purchase please speak with him in these details \nSTEP A - Villa Style:\n    \"What villa style are you interested in?\"\n    Options: Modern, Classic, Mediterranean, Contemporary\n\n    STEP B - Bedrooms:\n    \"How many bedrooms are you looking for?\"\n    Options: 3 Bedrooms, 4 Bedrooms, 5 Bedrooms, 6+ Bedrooms\n\n    STEP C - Payment Method:\n    \"What is your preferred payment method?\"\n    Options: Cash, Installments, Mortgage\n\n    STEP D - If Installments:\n    \"What down payment percentage are you comfortable with?\"\n    Options: 10%, 20%, 30%, 50%\n\n    STEP D - If Mortgage:\n    \"Do you have a preferred bank for the mortgage?\"\n    (Accept open text)\n\n    STEP D - If Cash:\n    Skip to STEP E.\n\n    STEP E - Final Summary:\n    Summarize ALL collected details (from qualification + purchase steps) in a clean list, then say:\n    \"Perfect! We have everything we need. Our team will prepare a tailored property proposal for you. You will receive it within 24 hours. Thank you, [Name]!\"\n\n  **If score is 80 or below:**\n  Say: \"Great! An agent from our team will be with you shortly to discuss everything further. Thank you!\"\n  Then end the conversation.\n\n  → If the user says they are NOT available now:\n  Say: \"No problem at all! We will follow up with you at a convenient time. Have a great day!\"\n  Then end the conversation.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -80,
+        -304
+      ],
+      "id": "cf6b4ac5-5bbe-4804-a51c-e9e3b451cdb3",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -272,
+        -80
+      ],
+      "id": "0d1b6919-3962-4d3a-badc-081f4a323d1d",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "D5VwW9FhMG7h3tmy",
+          "name": "OpenAI Account 8"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.message.chat.id }}",
+        "contextWindowLength": 30
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -32,
+        -48
+      ],
+      "id": "8369300a-0a3e-4172-b808-65e214b4a2aa",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1LnKV42qUG3Vdu4rys1QKgFLYmuNs1M0PMZ_lNFnAthc",
+          "mode": "list",
+          "cachedResultName": "Lead Qualification Agent Project ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LnKV42qUG3Vdu4rys1QKgFLYmuNs1M0PMZ_lNFnAthc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LnKV42qUG3Vdu4rys1QKgFLYmuNs1M0PMZ_lNFnAthc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "property": "={{ $fromAI(\"property\") || \"Not specified\" }}",
+            "buy/rent ": "={{ $fromAI(\"buy_or_rent\") || \"Not specified\" }}",
+            "new/resale": "={{ $fromAI(\"new_or_resale\") || \"Not specified\" }}",
+            "first purchase": "={{ $fromAI(\"first_purchase\") || \"Not specified\" }}",
+            "location": "={{ $fromAI(\"location\") || \"Not specified\" }}",
+            "name ": "={{ $fromAI(\"name\") || \"Not specified\" }}",
+            "budget ": "={{ $fromAI(\"budget\") || \"Not specified\" }}",
+            "email ": "={{ $fromAI(\"email\") || \"Not specified\" }}",
+            "phone ": "={{ $fromAI(\"phone\") || \"Not specified\" }}",
+            "timeline": "={{ $fromAI(\"timeline\") || \"Not specified\" }}",
+            "score ": "={{ $fromAI(\"score\") || \"0\" }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "property",
+              "displayName": "property",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "buy/rent ",
+              "displayName": "buy/rent ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "new/resale",
+              "displayName": "new/resale",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "first purchase",
+              "displayName": "first purchase",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timeline",
+              "displayName": "timeline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "budget ",
+              "displayName": "budget ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "name ",
+              "displayName": "name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email ",
+              "displayName": "email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "phone ",
+              "displayName": "phone ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "score ",
+              "displayName": "score ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        160,
+        -64
+      ],
+      "id": "5f9c3b70-e546-4514-9413-a697c92d0adb",
+      "name": "Append row in sheet in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YxmiyDKwSUAefV7p",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        320,
+        -304
+      ],
+      "id": "619a7fa2-be89-4674-beff-53c314380fce",
+      "name": "Send a text message",
+      "webhookId": "e11859ef-6379-4354-b158-ce0d27bbd62f",
+      "credentials": {
+        "telegramApi": {
+          "id": "jBAQfCk2QHY8wOQe",
+          "name": "Telegram account 40"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "6c57a134-01f0-47bb-9f0d-71720139b8b8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1d52e26502ab362c0b60f91c6d37756d0d545fbe1c12904239c10acad5a587bd"
+  },
+  "id": "lD_j7hs-y7joXjTysde8z",
+  "tags": []
+}
